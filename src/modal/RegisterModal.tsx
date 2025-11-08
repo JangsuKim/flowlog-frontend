@@ -12,16 +12,16 @@ export default function RegisterModal({ onClose }: { onClose: () => void }) {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      setError('비밀번호가 일치하지 않습니다.');
+      setError('パスワードが一致しません。');
       return;
     }
 
     try {
       await register(email, password, name);
-      alert('회원가입 성공!');
+      alert('登録が完了しました!');
       onClose();
     } catch {
-      setError('회원가입에 실패했습니다. 다시 시도해주세요.');
+      setError('登録に失敗しました。もう一度お試しください。');
     }
   };
 
@@ -43,7 +43,7 @@ export default function RegisterModal({ onClose }: { onClose: () => void }) {
         </button>
 
         <h2 className='text-2xl font-bold text-center text-gray-800 mb-6'>
-          회원가입
+          メンバー登録
         </h2>
 
         {error && (
@@ -53,14 +53,14 @@ export default function RegisterModal({ onClose }: { onClose: () => void }) {
         )}
 
         <form onSubmit={handleSubmit} className='space-y-5'>
-          {/* 이름 */}
+          {/* 名前 */}
           <div>
             <label className='block text-sm font-medium text-gray-700 text-left mb-1'>
-              이름
+              名前
             </label>
             <input
               type='text'
-              placeholder='이름을 입력하세요'
+              placeholder='名前を入力してください'
               className='w-full p-3 border text-gray-700 border-gray-300 rounded-lg 
                          focus:outline-none focus:ring-2 focus:ring-blue-400'
               value={name}
@@ -70,7 +70,7 @@ export default function RegisterModal({ onClose }: { onClose: () => void }) {
           </div>
           <div>
             <label className='block text-sm font-medium text-gray-700 text-left mb-1'>
-              이메일
+              メールアドレス
             </label>
             <input
               type='email'
@@ -85,11 +85,11 @@ export default function RegisterModal({ onClose }: { onClose: () => void }) {
 
           <div>
             <label className='block text-sm font-medium text-gray-700 text-left mb-1'>
-              비밀번호
+              パスワード
             </label>
             <input
               type='password'
-              placeholder='비밀번호를 입력하세요'
+              placeholder='パスワードを入力してください'
               className='w-full p-3 border text-gray-700 border-gray-300 rounded-lg 
                          focus:outline-none focus:ring-2 focus:ring-blue-400'
               value={password}
@@ -100,11 +100,11 @@ export default function RegisterModal({ onClose }: { onClose: () => void }) {
 
           <div>
             <label className='block text-sm font-medium text-gray-700 text-left mb-1'>
-              비밀번호 확인
+              パスワード確認
             </label>
             <input
               type='password'
-              placeholder='비밀번호를 다시 입력하세요'
+              placeholder='パスワードを再入力してください'
               className='w-full p-3 border text-gray-700 border-gray-300 rounded-lg 
                          focus:outline-none focus:ring-2 focus:ring-blue-400'
               value={confirmPassword}
@@ -118,7 +118,7 @@ export default function RegisterModal({ onClose }: { onClose: () => void }) {
             className='w-full text-white p-3 rounded-lg font-semibold 
                        hover:bg-blue-600 transition'
           >
-            회원가입
+            メンバー登録
           </button>
         </form>
       </div>

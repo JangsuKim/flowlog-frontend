@@ -15,8 +15,8 @@ export default function Login() {
     try {
       const data = await login(email, password);
       localStorage.setItem('accessToken', data.accessToken);
-      alert('로그인 성공!');
-      console.log('로그인 성공:', data);
+      alert('ログインしました!');
+      console.log('ログインしました:', data);
       navigate('/dashboard');
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -34,7 +34,7 @@ export default function Login() {
           FlowLog
         </h1>
         <p className='text-center text-gray-500 mb-8 text-sm'>
-          계정 정보를 입력해 로그인하세요
+          アカウント情報を入力してください。
         </p>
 
         <form onSubmit={handleSubmit} className='space-y-5'>
@@ -46,7 +46,7 @@ export default function Login() {
 
           <div>
             <label className='block text-sm font-medium text-gray-700 mb-1'>
-              이메일
+              Email
             </label>
             <input
               type='email'
@@ -60,11 +60,11 @@ export default function Login() {
 
           <div>
             <label className='block text-sm font-medium text-gray-700 mb-1'>
-              비밀번호
+              Password
             </label>
             <input
               type='password'
-              placeholder='비밀번호를 입력하세요'
+              placeholder='パスワードを入力してください'
               className='w-full p-3 border text-gray-700 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400'
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -76,12 +76,12 @@ export default function Login() {
             type='submit'
             className='w-full bg-blue-500 text-white p-3 rounded-lg font-semibold hover:bg-blue-600 transition'
           >
-            로그인
+            ログイン
           </button>
         </form>
 
         <p className='text-center text-gray-500 text-sm mt-6'>
-          계정이 없으신가요?{' '}
+          アカウントがないですか？{' '}
           <a
             href='#'
             onClick={(e) => {
@@ -90,7 +90,7 @@ export default function Login() {
             }}
             className='text-blue-500 hover:underline'
           >
-            회원가입
+            メンバー登録
           </a>
           {showRegister && (
             <RegisterModal onClose={() => setShowRegister(false)} />

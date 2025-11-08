@@ -13,6 +13,7 @@ function Home() {
   return (
     <div style={{ padding: 24 }}>
       <h1>Flowlog Frontend</h1>
+      <h1 className='text-3xl font-bold text-blue-600'>Flowlog Frontend</h1>
       <p>Backend health: {health}</p>
       <nav>
         <Link to='/about'>About</Link>
@@ -20,7 +21,6 @@ function Home() {
     </div>
   );
 }
-
 function About() {
   return <div style={{ padding: 24 }}>About page</div>;
 }

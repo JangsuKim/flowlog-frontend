@@ -92,10 +92,10 @@ export default function Login() {
           >
             メンバー登録
           </a>
-          {showRegister && (
-            <RegisterModal onClose={() => setShowRegister(false)} />
-          )}
         </p>
+        {showRegister && (
+          <RegisterModal onClose={() => setShowRegister(false)} />
+        )}
       </div>
     </div>
   );

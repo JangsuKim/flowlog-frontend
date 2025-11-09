@@ -1,24 +1,14 @@
 import { useState, useEffect } from 'react';
+import type { Project } from '../types/project';
 import AppLayout from '../layout/AppLayout';
 import ProjectCreateModal from '../modal/ProjectCreateModal';
 import axios from 'axios';
 
-// ✅ 프로젝트 타입
-interface Project {
-  id: number;
-  name: string;
-  ownerName: string;
-  progress: number;
-  dueDate: string;
-  teamId: number;
-  teamName: string;
-  status: 'IN_PROGRESS' | 'COMPLETED';
-}
-
 // ✅ 팀별 그룹화 함수
 function groupByTeam(projects: Project[]) {
   return projects.reduce((acc, project) => {
-    (acc[project.teamName] = acc[project.teamName] || []).push(project);
+    const teamKey = project.teamName ?? '未設定';
+    (acc[teamKey] = acc[teamKey] || []).push(project);
     return acc;
   }, {} as Record<string, Project[]>);
 }

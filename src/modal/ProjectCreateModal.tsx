@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
+import type {
+  Project,
+  ProjectApiResponse,
+  ProjectStatus,
+} from '../types/project';
 import axios from 'axios';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (newProject: any) => void;
+  onSuccess: (newProject: Project) => void;
 }
 
 interface Team {
@@ -56,19 +61,33 @@ export default function ProjectCreateModal({
 
     setLoading(true);
     try {
-      const res = await axios.post(
+      const payload = {
+        name,
+        dueDate,
+        teamId,
+        description: 'Dashboardから作成',
+        status: 'IN_PROGRESS' as ProjectStatus,
+      };
+      const res = await axios.post<ProjectApiResponse>(
         `${API_BASE_URL}/projects`,
+        payload,
         {
-          name,
-          dueDate,
-          teamId,
-          description: 'Dashboardから作成',
-          status: 'IN_PROGRESS', // ✅ 자동 지정
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
+      const newProject: Project = {
+        id: res.data.id,
+        name: res.data.name,
+        ownerName: res.data.ownerName ?? null,
+        dueDate: res.data.dueDate,
+        teamId: res.data.teamId ?? null,
+        teamName: res.data.teamName ?? null,
+        status: res.data.status,
+        progress: res.data.progress ?? 0,
+        description: res.data.description ?? null,
+      };
 
-      onSuccess(res.data);
+      onSuccess(newProject);
       onClose();
     } catch (err) {
       console.error('❌ プロジェクト作成失敗:', err);

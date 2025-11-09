@@ -19,6 +19,7 @@ export const login = async (email: string, password: string) => {
       name: data.name,
       role: data.role,
       teamId: data.teamId,
+      teamName: data.teamName,
     };
     localStorage.setItem('user', JSON.stringify(userInfo));
 

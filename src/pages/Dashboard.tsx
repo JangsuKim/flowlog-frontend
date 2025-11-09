@@ -156,7 +156,7 @@ export default function Dashboard() {
       ) : (
         <section>
           <h2 className='text-2xl font-semibold text-gray-700 mb-4'>
-            チーム {user.teamName}
+            {user.teamName} Team
           </h2>
           <div className='flex flex-wrap gap-6'>
             {projects

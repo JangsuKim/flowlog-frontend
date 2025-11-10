@@ -1,19 +1,35 @@
+// App.tsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
-import Projects from './pages/Projects';
 import ProjectDetailPage from './pages/ProjectDetail';
+import ProtectedRoute from './components/ProtectedRoute';
 
-function App() {
+export default function App() {
   return (
     <Routes>
+      {/* 로그인 페이지 (비보호) */}
       <Route path='/login' element={<Login />} />
-      <Route path='/dashboard' element={<Dashboard />} />
-      <Route path='/projects' element={<Projects />} />
-      <Route path='/projects/:id' element={<ProjectDetailPage />} />
+      {/* 대시보드 (보호) */}
+      <Route
+        path='/dashboard'
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      {/* 프로젝트 상세 (보호) */}
+      <Route
+        path='/projects/:id'
+        element={
+          <ProtectedRoute>
+            <ProjectDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      {/* 루트/기타 → 대시보드로 */}
       <Route path='*' element={<Navigate to='/dashboard' replace />} />
     </Routes>
   );
 }
-
-export default App;

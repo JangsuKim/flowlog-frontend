@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import type { Project } from '../types/project';
 import AppLayout from '../layout/AppLayout';
 import ProjectCreateModal from '../modal/ProjectCreateModal';
-import axios from 'axios';
+import ProjectEditModal from '../modal/ProjectEditModal';
+import { api } from '../api/axiosConfig';
 
 // ✅ 팀별 그룹화 함수
 function groupByTeam(projects: Project[]) {
@@ -22,29 +23,28 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
 
   // ✅ 로그인 유저 정보 로드
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  const token = localStorage.getItem('accessToken');
-
-  const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api';
+  const hasToken = !!localStorage.getItem('accessToken');
 
   useEffect(() => {
-    if (!token) {
+    if (!hasToken) {
       setError('ログインが必要です。');
       setLoading(false);
       return;
     }
 
     const fetchProjects = async () => {
+      setLoading(true);
       try {
-        const res = await axios.get(`${API_BASE_URL}/projects`, {
-          headers: { Authorization: `Bearer ${token}` },
-          params: user.role === 'LEADER' ? {} : { teamId: user.teamId }, // 👈 리더는 전체, 일반은 팀 제한
-        });
-
-        setProjects(res.data);
+        const params =
+          user.role === 'LEADER' ? undefined : { teamId: user.teamId };
+        const { data } = await api.get<Project[]>('/projects', { params });
+        setProjects(data);
+        setError('');
       } catch (err) {
         console.error('❌ プロジェクト取得失敗:', err);
         setError('プロジェクトデータを取得できませんでした。');
@@ -54,13 +54,13 @@ export default function Dashboard() {
     };
 
     fetchProjects();
-  }, [API_BASE_URL, token, user.role, user.teamId]);
+  }, [hasToken, user.role, user.teamId]);
 
   const handleProjectSuccess = (newProject: Project) => {
     setProjects((prev) => [...prev, newProject]);
   };
 
-  const groupedProjects = groupByTeam(projects);
+  const groupedProjects = useMemo(() => groupByTeam(projects), [projects]);
 
   if (loading) {
     return (
@@ -142,7 +142,15 @@ export default function Dashboard() {
               {teamProjects
                 .filter((p) => p.status === statusFilter)
                 .map((p) => (
-                  <ProjectCard key={p.id} project={p} size={cardSize} />
+                  <ProjectCard
+                    key={p.id}
+                    project={p}
+                    size={cardSize}
+                    onEdit={() => {
+                      setSelectedProject(p);
+                      setIsEditOpen(true);
+                    }}
+                  />
                 ))}
               {teamProjects.filter((p) => p.status === statusFilter).length ===
                 0 && (
@@ -162,7 +170,15 @@ export default function Dashboard() {
             {projects
               .filter((p) => p.status === statusFilter)
               .map((p) => (
-                <ProjectCard key={p.id} project={p} size={cardSize} />
+                <ProjectCard
+                  key={p.id}
+                  project={p}
+                  size={cardSize}
+                  onEdit={() => {
+                    setSelectedProject(p);
+                    setIsEditOpen(true);
+                  }}
+                />
               ))}
             {projects.filter((p) => p.status === statusFilter).length === 0 && (
               <p className='text-gray-400 text-sm ml-2'>
@@ -173,12 +189,29 @@ export default function Dashboard() {
         </section>
       )}
 
-      {/* ✅ 모달 추가 */}
+      {/* ✅ 생성 모달 */}
       <ProjectCreateModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={handleProjectSuccess}
       />
+
+      {/* ✅ 편집 모달 */}
+      {selectedProject && (
+        <ProjectEditModal
+          isOpen={isEditOpen}
+          onClose={() => {
+            setIsEditOpen(false);
+            setSelectedProject(null);
+          }}
+          project={selectedProject}
+          onSuccess={(updated) => {
+            setProjects((prev) =>
+              prev.map((p) => (p.id === updated.id ? updated : p))
+            );
+          }}
+        />
+      )}
     </AppLayout>
   );
 }
@@ -187,13 +220,15 @@ export default function Dashboard() {
 function ProjectCard({
   project,
   size,
+  onEdit,
 }: {
   project: Project;
   size: 'L' | 'M' | 'S';
+  onEdit?: () => void;
 }) {
   const sizeStyles = {
-    L: 'w-[260px] h-[180px] p-6 text-base',
-    M: 'w-[260px] h-[100px] p-4 text-sm',
+    L: 'w-[260px] h-[180px] p-6 text-base relative', // relative 추가
+    M: 'w-[260px] h-[100px] p-4 text-sm relative', // relative 추가
     S: 'w-[120px] h-[80px] p-3 text-xs relative',
   };
 
@@ -202,11 +237,56 @@ function ProjectCard({
       className={`bg-white rounded-2xl shadow-sm hover:shadow-md transition duration-200 border border-gray-100 ${sizeStyles[size]}`}
     >
       <h3
-        className={`${
-          size === 'S' ? 'text-sm' : size === 'M' ? 'text-lg' : 'text-xl'
-        } font-semibold text-gray-700 mb-2`}
+        className={`
+    relative flex items-center justify-between
+    ${size === 'S' ? 'text-sm' : size === 'M' ? 'text-lg' : 'text-xl'}
+    font-semibold text-gray-700 mb-2
+  `}
       >
-        {project.name}
+        <span className='truncate'>{project.name}</span>
+
+        {/* ✎ 흑백 연필 아이콘 (버튼 아님) */}
+        {onEdit && (
+          <div
+            role='button'
+            tabIndex={0}
+            onClick={onEdit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onEdit();
+              }
+            }}
+            className='
+                        [all:unset] absolute right-0
+                        inline-flex items-center justify-center
+                        w-6 h-6 rounded-full
+                        text-gray-500 hover:text-gray-700
+                        hover:bg-gray-100
+                        transition-all duration-200
+                        cursor-pointer
+                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300
+                      '
+            aria-label='編集'
+            title='編集'
+          >
+            <svg
+              xmlns='http://www.w3.org/2000/svg'
+              viewBox='0 0 24 24'
+              width='20'
+              height='20'
+              fill='none'
+              stroke='currentColor'
+              strokeWidth='2'
+              strokeLinecap='round'
+              strokeLinejoin='round'
+              aria-hidden='true'
+            >
+              <path d='M3 21l1.5-5.5L16.5 3.5a2.121 2.121 0 0 1 3 3L7.5 18.5 3 21z' />
+              <path d='M12 21h9' />
+            </svg>
+          </div>
+        )}
       </h3>
 
       {size === 'L' && (
@@ -220,7 +300,7 @@ function ProjectCard({
                 project.status === 'COMPLETED' ? 'bg-green-400' : 'bg-blue-400'
               }`}
               style={{ width: `${project.progress ?? 0}%` }}
-            ></div>
+            />
           </div>
           <p className='text-right text-gray-500 text-xs'>
             {project.progress ?? 0}% 完了
@@ -236,7 +316,7 @@ function ProjectCard({
                 project.status === 'COMPLETED' ? 'bg-green-400' : 'bg-blue-400'
               }`}
               style={{ width: `${project.progress ?? 0}%` }}
-            ></div>
+            />
           </div>
           <p className='text-right text-gray-500 text-xs'>
             {project.progress ?? 0}% 完了

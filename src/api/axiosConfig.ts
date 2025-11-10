@@ -1,6 +1,8 @@
+// src/api/axiosConfig.ts
 import axios from 'axios';
 
-const api = axios.create({
+// export const api 로 명시 (named export)
+export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
   headers: { 'Content-Type': 'application/json' },
 });
@@ -14,4 +16,4 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-export default api;
+export default api; // ← default로도 유지해도 됨

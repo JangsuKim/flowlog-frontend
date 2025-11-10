@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { login } from '../api/auth';
 import RegisterModal from '../modal/RegisterModal';
@@ -9,6 +9,13 @@ export default function Login() {
   const [error, setError] = useState('');
   const [showRegister, setShowRegister] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

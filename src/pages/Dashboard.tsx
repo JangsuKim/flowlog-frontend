@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Project } from '../types/project';
 import AppLayout from '../layout/AppLayout';
 import ProjectCreateModal from '../modal/ProjectCreateModal';
@@ -25,6 +26,7 @@ export default function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const navigate = useNavigate();
 
   // ✅ 로그인 유저 정보 로드
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -150,6 +152,7 @@ export default function Dashboard() {
                       setSelectedProject(p);
                       setIsEditOpen(true);
                     }}
+                    onOpen={() => navigate(`/projects/${p.id}`)}
                   />
                 ))}
               {teamProjects.filter((p) => p.status === statusFilter).length ===
@@ -178,6 +181,7 @@ export default function Dashboard() {
                     setSelectedProject(p);
                     setIsEditOpen(true);
                   }}
+                  onOpen={() => navigate(`/projects/${p.id}`)}
                 />
               ))}
             {projects.filter((p) => p.status === statusFilter).length === 0 && (
@@ -221,10 +225,12 @@ function ProjectCard({
   project,
   size,
   onEdit,
+  onOpen,
 }: {
   project: Project;
   size: 'L' | 'M' | 'S';
   onEdit?: () => void;
+  onOpen?: () => void;
 }) {
   const sizeStyles = {
     L: 'w-[260px] h-[180px] p-6 text-base relative', // relative 추가
@@ -234,6 +240,15 @@ function ProjectCard({
 
   return (
     <div
+      role='button'
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && onOpen) {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
       className={`bg-white rounded-2xl shadow-sm hover:shadow-md transition duration-200 border border-gray-100 ${sizeStyles[size]}`}
     >
       <h3
@@ -250,7 +265,10 @@ function ProjectCard({
           <div
             role='button'
             tabIndex={0}
-            onClick={onEdit}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();

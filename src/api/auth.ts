@@ -1,33 +1,49 @@
-import axios from 'axios';
+import { api } from './axiosConfig';
 
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
-});
+type Role = 'LEADER' | 'MEMBER';
+
+export interface LoginResponse {
+  accessToken: string;
+  tokenType: string; // "Bearer"
+  userId: number;
+  email: string;
+  name: string;
+  role: Role | { name: Role }; // enum 직렬화 케이스 대비
+  teamId?: number | null;
+  teamName?: string | null;
+}
 
 // ✅ 로그인 요청
 export const login = async (email: string, password: string) => {
-  const response = await api.post('/auth/login', { email, password });
-  const data = response.data;
+  const { data } = await api.post<LoginResponse>('/auth/login', {
+    email,
+    password,
+  });
 
-  // ✅ 토큰과 유저 정보 저장
+  // role 문자열로 정규화
+  const role: Role =
+    typeof data.role === 'string' ? data.role : (data.role?.name as Role);
+
+  // 토큰 저장
   if (data.accessToken) {
     localStorage.setItem('accessToken', data.accessToken);
-
-    const userInfo = {
-      id: data.userId,
-      email: data.email,
-      name: data.name,
-      role: data.role,
-      teamId: data.teamId,
-    };
-    localStorage.setItem('user', JSON.stringify(userInfo));
-
-    console.log('✅ 로그인 성공: accessToken 및 user 정보 저장 완료');
   } else {
     console.warn('⚠️ accessToken이 응답에 포함되지 않았습니다.');
   }
 
-  return data;
+  // 사용자 정보 저장
+  const userInfo = {
+    id: data.userId,
+    email: data.email,
+    name: data.name,
+    role,
+    teamId: data.teamId ?? null,
+    teamName: data.teamName ?? null,
+  };
+  localStorage.setItem('user', JSON.stringify(userInfo));
+  console.log('✅ 로그인 성공: accessToken 및 user 정보 저장 완료');
+
+  return { ...data, role }; // 정규화된 role 반환
 };
 
 // ✅ 회원가입 요청

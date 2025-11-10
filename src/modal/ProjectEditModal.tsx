@@ -1,16 +1,12 @@
-// src/modal/ProjectCreateModal.tsx
 import { useEffect, useState } from 'react';
 import { api } from '../api/axiosConfig';
-import type {
-  Project,
-  ProjectApiResponse,
-  ProjectStatus,
-} from '../types/project';
+import type { Project } from '../types/project';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: (newProject: Project) => void;
+  project: Project;
+  onSuccess: (updated: Project) => void;
 }
 
 interface Team {
@@ -18,35 +14,25 @@ interface Team {
   name: string;
 }
 
-const mapApiToProject = (dto: ProjectApiResponse): Project => ({
-  id: dto.id,
-  name: dto.name,
-  ownerName: dto.ownerName ?? null,
-  dueDate: dto.dueDate,
-  teamId: dto.teamId ?? null,
-  teamName: dto.teamName ?? null,
-  status: dto.status,
-  progress: dto.progress ?? 0,
-  description: dto.description ?? null,
-});
-
-export default function ProjectCreateModal({
+export default function ProjectEditModal({
   isOpen,
   onClose,
+  project,
   onSuccess,
 }: Props) {
-  const [name, setName] = useState('');
-  const [teamId, setTeamId] = useState<number | null>(null); // ✅ '' 대신 null
-  const [dueDate, setDueDate] = useState('');
+  const [name, setName] = useState(project.name);
+  const [teamId, setTeamId] = useState<number | null>(project.teamId);
+  const [dueDate, setDueDate] = useState(project.dueDate ?? '');
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // 모달 열릴 때만 팀 목록 로딩 & 폼 초기화
+  // 모달 열릴 때마다 최신 팀 목록 + 초기값 동기화
   useEffect(() => {
     if (!isOpen) return;
-    setName('');
-    setTeamId(null);
-    setDueDate('');
+
+    setName(project.name);
+    setTeamId(project.teamId ?? null);
+    setDueDate(project.dueDate ?? '');
 
     const fetchTeams = async () => {
       try {
@@ -57,7 +43,7 @@ export default function ProjectCreateModal({
       }
     };
     fetchTeams();
-  }, [isOpen]);
+  }, [isOpen, project]);
 
   if (!isOpen) return null;
 
@@ -71,16 +57,25 @@ export default function ProjectCreateModal({
         name,
         dueDate,
         teamId,
-        description: 'Dashboardから作成',
-        status: 'IN_PROGRESS' as ProjectStatus,
       };
 
-      const { data } = await api.post<ProjectApiResponse>('/projects', payload);
-      onSuccess(mapApiToProject(data));
+      const { data } = await api.put<Project>(
+        `/projects/${project.id}`,
+        payload
+      );
+
+      // teamName 폴백 처리(백엔드가 보장하지 못하는 경우 대비)
+      const updated: Project = {
+        ...project,
+        ...data,
+        teamName: data.teamName ?? (data.teamId ? `Team ${data.teamId}` : null),
+      };
+
+      onSuccess(updated);
       onClose();
     } catch (err) {
-      console.error('❌ プロジェクト作成失敗:', err);
-      alert('作成に失敗しました。');
+      console.error('❌ プロジェクト更新失敗:', err);
+      alert('更新に失敗しました。');
     } finally {
       setLoading(false);
     }
@@ -88,17 +83,15 @@ export default function ProjectCreateModal({
 
   return (
     <div className='fixed inset-0 bg-gray-800/30 flex justify-center items-center z-50 backdrop-blur-sm'>
-      <div className='bg-white rounded-2xl shadow-lg p-6 w-[400px]'>
+      <div className='bg-white rounded-2xl shadow-lg p-6 w-[420px]'>
         <h2 className='text-xl font-semibold mb-4 text-gray-700'>
-          新規プロジェクト作成
+          プロジェクト編集
         </h2>
 
         <div className='space-y-4'>
-          {/* プロジェクト名 */}
+          {/* タイトル */}
           <div>
-            <label className='block text-sm text-gray-600 mb-1'>
-              プロジェクト名
-            </label>
+            <label className='block text-sm text-gray-600 mb-1'>タイトル</label>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -111,16 +104,16 @@ export default function ProjectCreateModal({
           <div>
             <label className='block text-sm text-gray-600 mb-1'>チーム</label>
             <select
-              value={teamId ?? ''} // ✅ null → '' 로 표시
+              value={teamId ?? ''}
               onChange={(e) =>
                 setTeamId(e.target.value ? Number(e.target.value) : null)
               }
               className='w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300'
             >
               <option value=''>チームを選択</option>
-              {teams.map((team) => (
-                <option key={team.id} value={team.id}>
-                  {team.name}
+              {teams.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.name}
                 </option>
               ))}
             </select>
@@ -131,13 +124,14 @@ export default function ProjectCreateModal({
             <label className='block text-sm text-gray-600 mb-1'>期限</label>
             <input
               type='date'
-              value={dueDate}
+              value={dueDate ?? ''}
               onChange={(e) => setDueDate(e.target.value)}
               className='w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-300'
             />
           </div>
         </div>
 
+        {/* 버튼 */}
         <div className='mt-6 flex justify-end gap-3'>
           <button
             onClick={onClose}

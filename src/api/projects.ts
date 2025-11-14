@@ -1,5 +1,6 @@
 import { api } from './axiosConfig';
 import type { Project, ProjectStatus } from '../types/project';
+import type { ProjectDetail } from '../types/projectDetail';
 
 /** 목록 조회 파라미터 (필요 시 확장) */
 export interface ProjectListParams {
@@ -41,7 +42,7 @@ export async function getProjectsByTeam(teamId: number) {
 
 /** 프로젝트 상세 조회 */
 export async function getProjectById(id: number) {
-  const { data } = await api.get<Project>(`/projects/${id}`);
+  const { data } = await api.get<ProjectDetail>(`/projects/${id}`);
   return data;
 }
 

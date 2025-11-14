@@ -5,12 +5,14 @@ export interface Project {
   id: number;
   name: string;
   ownerName: string | null;
-  dueDate: string; // "YYYY-MM-DD"
+  startDate: string | null; // "YYYY-MM-DD"
+  dueDate: string | null; // "YYYY-MM-DD"
   teamId: number | null;
   teamName: string | null;
   status: ProjectStatus;
   progress?: number | null;
   description?: string | null;
+  tags?: string[];
 }
 
 /** 백엔드 응답 DTO (필요하면 조정) */
